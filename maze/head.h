@@ -7,3 +7,4 @@
 void read_maze();
 void print();
 void move();
+ 

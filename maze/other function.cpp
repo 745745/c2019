@@ -1,9 +1,9 @@
-#include"head.h"
+ï»¿+#include"head.h"
 using namespace std;
 char A[25][25];
 void read_maze()
 {
-	fstream read("ÃÔ¹¬µØÍ¼.txt", ios::in || ios::out||ios::app);
+	fstream read("è¿·å®«åœ°å›¾.txt", ios::in || ios::out || ios::app);
 	read >> noskipws;
 	for (int j = 1; j <= 22; j++)
 	{
@@ -15,9 +15,9 @@ void read_maze()
 	print();
 }
 
-void move( )
+void move()
 {
-	int total=0;
+	int total = 0;
 	int d;
 	int x = 2;
 	int y = 2;
@@ -26,7 +26,7 @@ void move( )
 		system("cls");
 
 
-		switch (d)    //¿ªÊ¼ÒÆ¶¯Ä¿Ç°Î»ÖÃ
+		switch (d)    
 		{
 		case(72):
 			if (A[x - 1][y] != '8')
@@ -54,13 +54,13 @@ void move( )
 			break;
 		}
 		print();
-		if (x==20&&y==20)
+		if (x == 20 && y == 20)
 		{
-			cout << "Äã×Ü¹²×ßÁË" << total << "²½"<<endl;
+			cout << "ä½ æ€»å…±èµ°äº†" << total << "æ­¥" << endl;
 			break;
 		}
 	}
-	
+
 }
 
 void print()
