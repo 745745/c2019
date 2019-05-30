@@ -3,11 +3,12 @@
 
 //AI会用到棋盘定义的数据类型
 #include "chess board.h"
-#define DEEP    2 //最大搜索4层(但是4层比较慢，不建议用)
+#define DEEP    2 //最大搜索4层
 
 //计分板
 typedef enum score_e 
 {
+    WIN5   = 100000,        //5连           
     ALIVE4 = 10000,         //活4
     ALIVE3 = 1000,          //活3
     DIE4   = 1000,          //死4
