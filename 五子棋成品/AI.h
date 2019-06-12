@@ -1,13 +1,7 @@
 #pragma once
-
-
-//AI会用到棋盘定义的数据类型
-#include "chess board.h"
-#define DEEP    2 //最大搜索4层
-
-//计分板
-typedef enum score_e 
-{
+#include "UI.h"
+#define DEEP    2
+typedef enum score_e {
     WIN5   = 100000,        //5连           
     ALIVE4 = 10000,         //活4
     ALIVE3 = 1000,          //活3
@@ -19,12 +13,10 @@ typedef enum score_e
 } score;
 
 //空子的序列，记录没有落子的棋盘
-typedef struct chess_queue 
-{
-    chess_t chess[BOARD_SIZE*BOARD_SIZE];
-      char len;
+typedef struct chess_queue_s {
+    chess_t chess[board_size*board_size];
+    unsigned char len;
 } chess_queue;
-//AI下棋,传入棋盘和选择的x，y
-int AI_play_chess(  char chessd[][BOARD_SIZE],chess_t *aiChess);
-
-
+int AI_play_chess(unsigned char chessd[][board_size],chess_t *aiChess);
+static int max_alphabeta(char depth, chess_t chess, unsigned char chessed[][board_size], int alpha, int beta);
+static int min_alphabeta(char depth, chess_t chess, unsigned char chessed[][board_size], int alpha, int beta);

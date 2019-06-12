@@ -1,17 +1,15 @@
-
+#include "AI.h"
+#include "UI.h"
 #include <windows.h>
 #include <math.h>
-#include "chess board.h"
-#include "AI.h"
 
-  char chessPoints[BOARD_SIZE][BOARD_SIZE];//棋盘
-  char AIChessColor = WHITE_FLAG;//AI执白后行.
-  char humChessColor = BLACK_FLAG;
+
+
+unsigned char chessPoints[board_size][board_size];//棋盘
+unsigned char AIchesscolor = whitechess;//AI执白后行.
+unsigned char humchesscolor = blackchess;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-
-
-//下面是UI界面
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
 {
 	static TCHAR szAppName[] = TEXT("MyGobang");
@@ -33,7 +31,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 		return 0;
 	}
 	hwnd = CreateWindow(szAppName, 
-		TEXT("五子棋"), 
+		TEXT("xxxx的五子棋"), 
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, 
 		CW_USEDEFAULT, 
@@ -55,7 +53,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 // 绘制黑色实心点
 HRESULT _DrawBlackSolidPoint(HDC hdc, int radius, POINT postion)
 {
-	SelectObject(hdc, GetStockObject(BLACK_BRUSH));    //GetStockObject从Windows系统库存中选取画笔样式 并且返回句柄，SelectObject选择一个画笔句柄设置为当前hdc的画笔样式，
+	SelectObject(hdc, GetStockObject(BLACK_BRUSH));
 	Ellipse(hdc, postion.x - radius, postion.y - radius, postion.x + radius, postion.y + radius);
 	SelectObject(hdc, GetStockObject(WHITE_BRUSH));
 	return S_OK;
@@ -64,14 +62,14 @@ HRESULT _DrawBlackSolidPoint(HDC hdc, int radius, POINT postion)
 HRESULT _DrawWhiteHollowPoint(HDC hdc, int radius, POINT postion)
 {
 	SelectObject(hdc, GetStockObject(WHITE_BRUSH));
-	Ellipse(hdc, postion.x - radius, postion.y - radius , postion.x + radius, postion.y + radius);  //画圆
+	Ellipse(hdc, postion.x - radius, postion.y - radius, postion.x + radius, postion.y + radius);
 	return S_OK;
 }
 
 //绘制棋子
-HRESULT _DrawSolidPoint(  char type, HDC hdc, int radius, POINT postion)
+HRESULT _DrawSolidPoint(unsigned char type, HDC hdc, int radius, POINT postion)
 {
-    if(type == BLACK_FLAG) {
+    if(type == blackchess) {
         _DrawBlackSolidPoint(hdc,radius,postion);
     }else {
         _DrawWhiteHollowPoint(hdc,radius,postion);
@@ -82,8 +80,8 @@ HRESULT _DrawSolidPoint(  char type, HDC hdc, int radius, POINT postion)
 // 获取一小格宽度和高度
 HRESULT _GetCellWidthAndHeight(POINT ptLeftTop, int cxClient, int cyClient, int *cxCell, int *cyCell)
 {
-	*cxCell = (cxClient - ptLeftTop.x * 2) / (BOARD_SIZE - 1);
-	*cyCell = (cyClient - ptLeftTop.y * 2) / (BOARD_SIZE - 1);
+	*cxCell = (cxClient - ptLeftTop.x * 2) / (board_size - 1);
+	*cyCell = (cyClient - ptLeftTop.y * 2) / (board_size - 1);
 	return S_OK;
 }
 // 将实际坐标转化为逻辑坐标，这里需要进行实际点到棋盘点的转化
@@ -93,15 +91,15 @@ HRESULT _ExChangeLogicalPosition(POINT actualPostion, POINT ptLeftTop, int cxCli
 	int cxCell = 0, cyCell = 0;
 	_GetCellWidthAndHeight(ptLeftTop, cxClient, cyClient, &cxCell, &cyCell);
 	// 检查点击有效性
-	if (actualPostion.x < ptLeftTop.x || actualPostion.x > ptLeftTop.x + (BOARD_SIZE-1) * cxCell ||
-		actualPostion.y < ptLeftTop.y || actualPostion.y > ptLeftTop.y + (BOARD_SIZE-1) * cyCell) {
+	if (actualPostion.x < ptLeftTop.x || actualPostion.x > ptLeftTop.x + (board_size-1) * cxCell ||
+		actualPostion.y < ptLeftTop.y || actualPostion.y > ptLeftTop.y + (board_size-1) * cyCell) {
 		MessageBox(NULL ,TEXT("请点击棋盘内下棋！"), TEXT("提示"), MB_OK);
 		return S_FALSE;
 	}
 	// 获取相邻四个点
 	int xCount = 0, yCount = 0;
 	POINT sidePoints[4] = { 0 };
-	for (int x = ptLeftTop.x; x <= ptLeftTop.x + (BOARD_SIZE-1) * cxCell; x += cxCell, xCount++) {
+	for (int x = ptLeftTop.x; x <= ptLeftTop.x + (board_size-1) * cxCell; x += cxCell, xCount++) {
 		if (actualPostion.x >= x && actualPostion.x <= x + cxCell) {
 			sidePoints[0].x = x;
 			sidePoints[2].x = x;
@@ -110,7 +108,7 @@ HRESULT _ExChangeLogicalPosition(POINT actualPostion, POINT ptLeftTop, int cxCli
 			break;
 		}
 	}
-	for (int y = ptLeftTop.y; y <= ptLeftTop.y + (BOARD_SIZE-1) * cyCell; y += cyCell, yCount++) {
+	for (int y = ptLeftTop.y; y <= ptLeftTop.y + (board_size-1) * cyCell; y += cyCell, yCount++) {
 		if (actualPostion.y >= y && actualPostion.y <= y + cyCell) {
 			sidePoints[0].y = y;
 			sidePoints[1].y = y;
@@ -158,30 +156,25 @@ HRESULT DrawChessBoard(HDC hdc, POINT ptLeftTop, int cxClient, int cyClient)
 {
 	// 获得一小格的宽度和高度
 	int cxCell = 0, cyCell = 0,row_line;
-	_GetCellWidthAndHeight(ptLeftTop, cxClient, cyClient, &cxCell, &cyCell);
-	// 绘制竖线
-	for (int col = 0; col < BOARD_SIZE; ++col) 
-	{
-		MoveToEx(hdc, ptLeftTop.x + col * cxCell, ptLeftTop.y, NULL);
-		LineTo(hdc, ptLeftTop.x + col * cxCell, ptLeftTop.y + (BOARD_SIZE-1) * cyCell);
-	}
-	// 绘制灰色的横线
 	HPEN hPen, hOldPen;
 	hPen = CreatePen(PS_SOLID, 1, RGB(102, 204, 255));
-	//hOldPen = SelectObject(hdc, hPen);
-	hOldPen = hPen;
-	for (int row = 0; row < BOARD_SIZE/2; ++row) 
-	{
-		MoveToEx(hdc, ptLeftTop.x, ptLeftTop.y + cyCell + row * 2 * cyCell, NULL);
-		LineTo(hdc, ptLeftTop.x + (BOARD_SIZE-1) * cxCell, ptLeftTop.y + cyCell + row * 2 * cyCell);
+	hOldPen = SelectObject(hdc, hPen);
+	_GetCellWidthAndHeight(ptLeftTop, cxClient, cyClient, &cxCell, &cyCell);
+	// 绘制竖线
+	for (int col = 0; col < board_size; ++col) {
+		MoveToEx(hdc, ptLeftTop.x + col * cxCell, ptLeftTop.y, NULL);
+		LineTo(hdc, ptLeftTop.x + col * cxCell, ptLeftTop.y + (board_size-1) * cyCell);
 	}
-	SelectObject(hdc, hOldPen);
+	// 绘制灰色的横线
+	for (int row = 0; row < board_size/2; ++row) {
+		MoveToEx(hdc, ptLeftTop.x, ptLeftTop.y + cyCell + row * 2 * cyCell, NULL);
+		LineTo(hdc, ptLeftTop.x + (board_size-1) * cxCell, ptLeftTop.y + cyCell + row * 2 * cyCell);
+	}
 	// 绘制黑色的横线
-    row_line = (BOARD_SIZE%2 == 0)?(BOARD_SIZE/2):(BOARD_SIZE/2+1);
-	for (int row = 0; row < row_line; ++row) 
-	{
+    row_line = (board_size%2 == 0)?(board_size/2):(board_size/2+1);
+	for (int row = 0; row < row_line; ++row) {
 		MoveToEx(hdc, ptLeftTop.x, ptLeftTop.y + row * 2 * cyCell, NULL);
-		LineTo(hdc, ptLeftTop.x + (BOARD_SIZE-1) * cxCell, ptLeftTop.y + row * 2 * cyCell);
+		LineTo(hdc, ptLeftTop.x + (board_size-1) * cxCell, ptLeftTop.y + row * 2 * cyCell);
 	}
 	return S_OK;
 }
@@ -194,14 +187,12 @@ HRESULT DrawFiveHeavyPoint(HDC hdc, POINT ptLeftTop, int cxClient, int cyClient)
 	// 将逻辑点转换为实际点
 	POINT logicalPoint[5] = { 3, 3, 3, 11, 11, 3, 11, 11, 7, 7 };
 	POINT actualPoint[5] = { 0 };
-	for (int cPt = 0; cPt < 5; ++cPt) 
-	{
+	for (int cPt = 0; cPt < 5; ++cPt) {
 		_ExchangeActualPositon(logicalPoint[cPt], cxCell, cyCell, ptLeftTop, &actualPoint[cPt]);
 	}
 	// 绘制五个黑色实心点
-	for (int cPt = 0; cPt < 5; ++cPt) 
-	{
-		_DrawBlackSolidPoint(hdc, FIVE_MARK_POINT_RADIUS, actualPoint[cPt]);
+	for (int cPt = 0; cPt < 5; ++cPt) {
+		_DrawBlackSolidPoint(hdc, R, actualPoint[cPt]);
 	}
 	return S_OK;
 }
@@ -227,7 +218,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	POINT changedActualPosition;
     int result = -1;
 	// 胜利者
-	int winner = NULL_FLAG;
+	int winner = nullchess;
 	// 函数返回值
 	HRESULT hResult = S_FALSE;
     chess_t chess;
@@ -236,30 +227,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 	case WM_SIZE:
-	{
 		cxClient = LOWORD(lParam);
 		cyClient = HIWORD(lParam);
 		return 0;
-	}
 	case WM_LBUTTONDOWN:
-	{	// 获得实际点
+		// 获得实际点
 		actualPosition.x = LOWORD(lParam);
 		actualPosition.y = HIWORD(lParam);
 		// 获得对应的计算过后的逻辑点
 		hResult = _ExChangeLogicalPosition(actualPosition, ptLeftTop, cxClient, cyClient, &logicalPostion);
-		if (S_FALSE == hResult) 
-		{
+		if (S_FALSE == hResult) {
 			return 0;
 		}
-		result = hum_play_chess(logicalPostion.x, logicalPostion.y);
-		if (result == GO_ERROR) 
-		{
-			return 0;
-		}
-		if (is_win(logicalPostion.x, logicalPostion.y, humChessColor)) 
-		{
-			winner = humChessColor;
-		}
+        result = hum_play_chess(logicalPostion.x,logicalPostion.y);
+        if (result == -1) {
+            return 0;
+        }
+        if(is_win(logicalPostion.x,logicalPostion.y,humchesscolor)) {
+            winner = humchesscolor;
+        }
 		// 获得一小格的宽度和高度
 		_GetCellWidthAndHeight(ptLeftTop, cxClient, cyClient, &cxCell, &cyCell);
 		// 将逻辑点转化为实际点
@@ -267,47 +253,41 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		_ExchangeActualPositon(logicalPostion, cxCell, cyCell, ptLeftTop, &changedActualPosition);
 		// 绘制实际点
 		hdc = GetDC(hwnd);
-		_DrawSolidPoint(humChessColor, hdc, CHESS_PIECE_RADIUS, changedActualPosition);
+		_DrawSolidPoint(humchesscolor,hdc, CHESS_PIECE_RADIUS, changedActualPosition);
 		ReleaseDC(hwnd, hdc);
-		if (humChessColor == winner) 
-		{
+        if (humchesscolor == winner) {
 			MessageBox(hwnd, TEXT("人获胜！"), TEXT("提示"), MB_OK);
-			return 0;
+            return 0;
 		}
-		//调用AI算出一个点到chess里面
-		AI_play_chess(chessPoints, &chess);
-		chessPoints[chess.x][chess.y] = AIChessColor;
-		if (is_win(chess.x, chess.y, AIChessColor)) 
-		{
-			winner = AIChessColor;
-		}
-		logicalPostion.x = chess.x;
-		logicalPostion.y = chess.y;
+        //调用AI算出一个点到chess里面
+        AI_play_chess(chessPoints,&chess);
+        chessPoints[chess.x][chess.y] = AIchesscolor;
+        if(is_win(chess.x,chess.y,AIchesscolor)) {
+            winner = AIchesscolor;
+        }
+        logicalPostion.x = chess.x;
+        logicalPostion.y = chess.y;
 		// 获得一小格的宽度和高度
 		_GetCellWidthAndHeight(ptLeftTop, cxClient, cyClient, &cxCell, &cyCell);
 		// 将逻辑点转化为实际点
 		_ExchangeActualPositon(logicalPostion, cxCell, cyCell, ptLeftTop, &changedActualPosition);
 		// 绘制实际点
 		hdc = GetDC(hwnd);
-		_DrawSolidPoint(AIChessColor, hdc, CHESS_PIECE_RADIUS, changedActualPosition);
+		_DrawSolidPoint(AIchesscolor,hdc, CHESS_PIECE_RADIUS, changedActualPosition);
 		ReleaseDC(hwnd, hdc);
-
-		if (AIChessColor == winner) 
-		{
-			MessageBox(hwnd, TEXT("你输了"), TEXT("提示"), MB_OK);
+                     
+        if (AIchesscolor == winner) {
+			MessageBox(hwnd, TEXT("电脑获胜！"), TEXT("提示"), MB_OK);
 		}
 		return 0;
-	}
-
 	case WM_RBUTTONDOWN:
 		return 0;
 	case WM_MBUTTONDOWN:
-	{    winner = NULL_FLAG;
-		//中间按键点击，重新初始化棋盘
-		gobang_init();
-		InvalidateRect(hwnd, NULL, TRUE);
+        winner = nullchess;
+        //中间按键点击，重新初始化棋盘
+		memset(chessPoints, 0, sizeof(chessPoints));
+		InvalidateRect(hwnd, NULL, 1);
 		return 0;
-	}
 	case WM_PAINT:
 		hdc = BeginPaint(hwnd, &ps);
 		// 初始化棋盘
@@ -322,49 +302,39 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
-//玩家下棋
- 
+/*
+玩家下棋
+*/
 int hum_play_chess(int a,int b)
 {
     int x = a;
     int y = b;
     int ret = 0;
-    if (check(x)||check(y)) 
-	{
+    if (check(x)||check(y)) {
         MessageBox(NULL, TEXT("Number Error."), TEXT("提示"), MB_OK);
-        return GO_ERROR;
+        return -1;
     }
-    if (chessPoints[x][y] != NULL_FLAG) 
-	{
-        MessageBox(NULL, TEXT("此处已经有棋子，请重选"), TEXT("怎么回事小老弟"), MB_OK);
-        return GO_ERROR;    
+    if (chessPoints[x][y] != nullchess) {
+        MessageBox(NULL, TEXT("此处已经有棋子，请重选"), TEXT("提示"), MB_OK);
+        return -1;    
     }
     
-    chessPoints[x][y] = humChessColor;
-    return GO_OK;
+    chessPoints[x][y] = humchesscolor;
+    return 0;
 }
 
-//初始化棋盘 
-void gobang_init(void)
-{
-	memset(chessPoints, 0, sizeof(chessPoints));
-    char i, j;
-   
-  
-}
-//判断是否胜利 
-int is_win(  char x,   char y,   char color)
+/*判断是否胜利*/
+unsigned int is_win(unsigned char x, unsigned char y, unsigned char color)
 {           
 	int count = 0;
 	int i,j,m;
-	int size = BOARD_SIZE;
+	int size = board_size;
 	//横
-	for (i = (x-4>0?x-4:0); (i <= x+4)&&(i<size); i++) 
-	{
+	for (i = (x-4>0?x-4:0); (i <= x+4)&&(i<size); i++) {
 		if (color == (chessPoints[i][y])) {
 			count++;
 			if (count >= 5) {
-				return TRUE;
+				return 1;
 			}
 		}
 		else
@@ -372,12 +342,11 @@ int is_win(  char x,   char y,   char color)
 	}
 	//竖
 	count = 0;
-	for (j=(y-4>0?y-4:0); (j<=y+4)&&(j<size); j++)
-	{
+	for (j=(y-4>0?y-4:0); (j<=y+4)&&(j<size); j++){
 		if (color == (chessPoints[x][j])) {
 			count++;
 			if (count >= 5) {
-				return TRUE;
+				return 1;
 			}
 		}
 		else
@@ -389,12 +358,11 @@ int is_win(  char x,   char y,   char color)
         if((x-m == 0) || (y-m == 0))
             break;
     }
-	for (i=x-m,j=y-m;(i>=0)&&(i<=x+4)&&(i<size)&&(j>=0)&&(j<=y+4)&&(j<size); i++,j++) 
-	{
+	for (i=x-m,j=y-m;(i>=0)&&(i<=x+4)&&(i<size)&&(j>=0)&&(j<=y+4)&&(j<size); i++,j++) {
 		if (color == (chessPoints[i][j])) {
 			count++;
 			if (count >= 5) {
-				return TRUE;
+				return 1;
 			}
 		}
 		else
@@ -403,22 +371,20 @@ int is_win(  char x,   char y,   char color)
 
 	//反斜线(/)
 	count = 0;
-    for(m = 0; m <= 4; m++) 
-	{
+    for(m = 0; m <= 4; m++) {
         if((x-m == 0) || (y+m == (size-1)))
             break;
     }
-	for (i=x-m,j=y+m;(i>=0)&&(i<=x+4)&&(i<size)&&(j>=y-4)&&(j>=0)&&(j<size); i++,j--) 
-	{
+	for (i=x-m,j=y+m;(i>=0)&&(i<=x+4)&&(i<size)&&(j>=y-4)&&(j>=0)&&(j<size); i++,j--) {
 		if (color == (chessPoints[i][j])) {
 			count++;
 			if (count >= 5) {
-				return TRUE;
+				return 1;
 			}
 		}
 		else {
 			count = 0;
 		}
 	}
-	return FALSE;
+	return 0;
 }
